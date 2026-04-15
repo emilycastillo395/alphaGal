@@ -53,17 +53,38 @@ To send this to the hprc, I created a sbatch job called `mafft_consensus`. Here 
 ```
 #!/bin/bash
 #SBATCH --job-name=mafft_consensus
-#SBATCH --output=mafft_consensus.out
-#SBATCH --error=mafft_consensus.err
+#SBATCH --output=logs/%x_%A_%a.out
+#SBATCH --error=logs/%x_%A_%a.err
 #SBATCH --time=04:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --ntasks=1
-#SBATCH --array=0-16
 #SBATCH --mem=8G
+#SBATCH --array=0-16
 
-echo "Running..."
+echo "Starting job $SLURM_ARRAY_TASK_ID"
+
+module load Anaconda3/2024.02-1
+
+# initialize conda for non-interactive shell
+source $(conda info --base)/etc/profile.d/conda.sh
 
 conda activate myenv
 
-echo "Running..."; for f in *.fasta.gz; do echo "Processing $f"; gunzip -c "$f" | mafft --auto - | seqtk consensus > "${f/.fasta.gz/_consensus.fasta}"; done; echo "DONE!"
+# Get file list (sorted for consistency)
+mapfile -t files < <(ls *.fasta.gz | sort)
+f=${files[$SLURM_ARRAY_TASK_ID]}
+
+echo "Processing: $f"
+
+base="${f/.fasta.gz/}"
+tmp_aln="${base}_aligned.fasta"
+out="${base}_consensus.fasta"
+
+# Step 1: Align with MAFFT
+gunzip -c "$f" | mafft --auto --thread 4 - > "$tmp_aln"
+
+# Step 2: Generate consensus with EMBOSS
+cons -sequence "$tmp_aln" -outseq "$out"
+
+echo "DONE: $out"
 ```
