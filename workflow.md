@@ -55,7 +55,7 @@ To send this to the hprc, I created a sbatch job called `mafft_consensus`. Here 
 #SBATCH --job-name=mafft_consensus
 #SBATCH --output=logs/%x_%A_%a.out
 #SBATCH --error=logs/%x_%A_%a.err
-#SBATCH --time=04:00:00
+#SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --ntasks=1
 #SBATCH --mem=8G
