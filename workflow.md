@@ -48,6 +48,65 @@ for r1 in *.R1.fastq.gz; do r2="${r1/.R1.fastq.gz/.R2.fastq.gz}"; out="${r1/.R1.
 ```
 echo "Running..."; for f in *_merged.fastq.gz; do echo "Processing $f"; out="${f/_merged.fastq.gz/.fasta}"; seqtk seq -a "$f" | gzip > "$out.gz"; done; echo "DONE!" &
 ```
+
+### Clean Up FASTA Files
+This is what biopython has on their website. It's a script called `sequence_cleaner`. "the big idea is to remove duplicate sequences, remove too short sequences (the user defines the minimum length) and remove sequences which have too many unknown nucleotides (N) (the user defines the % of N it allows ) and in the end the user can choose if he/she wants to have a file as output or print the result."
+
+```
+import sys
+from Bio import SeqIO
+
+
+def sequence_cleaner(fasta_file, min_length=0, por_n=100):
+    # Create our hash table to add the sequences
+    sequences = {}
+
+    # Using the Biopython fasta parse we can read our fasta input
+    for seq_record in SeqIO.parse(fasta_file, "fasta"):
+        # Take the current sequence
+        sequence = str(seq_record.seq).upper()
+        # Check if the current sequence is according to the user parameters
+        if (
+            len(sequence) >= min_length
+            and (float(sequence.count("N")) / float(len(sequence))) * 100 <= por_n
+        ):
+            # If the sequence passed in the test "is it clean?" and it isn't in the
+            # hash table, the sequence and its id are going to be in the hash
+            if sequence not in sequences:
+                sequences[sequence] = seq_record.id
+            # If it is already in the hash table, we're just gonna concatenate the ID
+            # of the current sequence to another one that is already in the hash table
+            else:
+                sequences[sequence] += "_" + seq_record.id
+
+    # Write the clean sequences
+
+    # Create a file in the same directory where you ran this script
+    with open("clear_" + fasta_file, "w+") as output_file:
+        # Just read the hash table and write on the file as a fasta format
+        for sequence in sequences:
+            output_file.write(">" + sequences[sequence] + "\n" + sequence + "\n")
+
+    print("CLEAN!!!\nPlease check clear_" + fasta_file)
+
+
+userParameters = sys.argv[1:]
+
+try:
+    if len(userParameters) == 1:
+        sequence_cleaner(userParameters[0])
+    elif len(userParameters) == 2:
+        sequence_cleaner(userParameters[0], float(userParameters[1]))
+    elif len(userParameters) == 3:
+        sequence_cleaner(
+            userParameters[0], float(userParameters[1]), float(userParameters[2])
+        )
+    else:
+        print("There is a problem!")
+except:
+    print("There is a problem!")
+```
+
 ### Generate your Consensus Sequence for each sequence within the FASTA file
 To send this to the hprc, I created a sbatch job called `mafft_consensus`. Here is the contents of the sbatch command. This allows each file to run simultaneously. When submistted there are 16 jobs submitted to the hprc. You can visualize the status of these jobs at `squeue --me`.
 ```
