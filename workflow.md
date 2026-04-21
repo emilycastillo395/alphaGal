@@ -35,76 +35,35 @@ source activate myenv
 ### Install Conda Packages  
 So far I am only using `seqtk`. As I go, I will add more.  
 ```
-conda install -c bioconda seqtk mafft
+conda install -c bioconda seqtk mafft cutadapt
 ```
-## Create and Organize FASTA Files
+## Check Quality of fastq files and Create and Organize FASTA Files
 ### Merge FASTQ R1 and R2 Files (Seqtk)
 Note: Your R1 and R2 files are forward and reverse seqeunces from the sequencing machine. We need to merge these to make one long DNA sequence per read. To do this, we will use `seqtk`
 ```
 for r1 in *.R1.fastq.gz; do r2="${r1/.R1.fastq.gz/.R2.fastq.gz}"; out="${r1/.R1.fastq.gz/_merged.fastq.gz}"; seqtk mergepe "$r1" "$r2" | gzip > "$out"; done &
 ```
 
+### Run FastQC to quality check sequences
+```
+module load FastQC
+mkdir fastqc_reports
+fastqc -o fastqc_reports *_merged.fastq.gz
+```
+### Clean Up using Cutadapt
+```
+python3 -m pip install --user --upgrade cutadapt
+conda create -n cutadapt-env cutadapt
+conda activate cutadapt-env
+```
+***** Stopped working here *********** Pick up Here ************
+```
+for f in *merged.fastq.gz; do base=${f%.fastq.gz}; cutadapt -a AGATCGGAAGAGC -e 0.1 -q 20 -m 100 -o trimmed_fastq/${base}.trimmed.fastq.gz "$f"; done
+```
+
 ### Convert FASTQ files to FASTA files
 ```
 echo "Running..."; for f in *_merged.fastq.gz; do echo "Processing $f"; out="${f/_merged.fastq.gz/.fasta}"; seqtk seq -a "$f" | gzip > "$out.gz"; done; echo "DONE!" &
-```
-
-### Clean Up FASTA Files
-This is what biopython has on their website. It's a script called `sequence_cleaner`. "the big idea is to remove duplicate sequences, remove too short sequences (the user defines the minimum length) and remove sequences which have too many unknown nucleotides (N) (the user defines the % of N it allows ) and in the end the user can choose if he/she wants to have a file as output or print the result."
-
-```
-import sys
-from Bio import SeqIO
-
-
-def sequence_cleaner(fasta_file, min_length=0, por_n=100):
-    # Create our hash table to add the sequences
-    sequences = {}
-
-    # Using the Biopython fasta parse we can read our fasta input
-    for seq_record in SeqIO.parse(fasta_file, "fasta"):
-        # Take the current sequence
-        sequence = str(seq_record.seq).upper()
-        # Check if the current sequence is according to the user parameters
-        if (
-            len(sequence) >= min_length
-            and (float(sequence.count("N")) / float(len(sequence))) * 100 <= por_n
-        ):
-            # If the sequence passed in the test "is it clean?" and it isn't in the
-            # hash table, the sequence and its id are going to be in the hash
-            if sequence not in sequences:
-                sequences[sequence] = seq_record.id
-            # If it is already in the hash table, we're just gonna concatenate the ID
-            # of the current sequence to another one that is already in the hash table
-            else:
-                sequences[sequence] += "_" + seq_record.id
-
-    # Write the clean sequences
-
-    # Create a file in the same directory where you ran this script
-    with open("clear_" + fasta_file, "w+") as output_file:
-        # Just read the hash table and write on the file as a fasta format
-        for sequence in sequences:
-            output_file.write(">" + sequences[sequence] + "\n" + sequence + "\n")
-
-    print("CLEAN!!!\nPlease check clear_" + fasta_file)
-
-
-userParameters = sys.argv[1:]
-
-try:
-    if len(userParameters) == 1:
-        sequence_cleaner(userParameters[0])
-    elif len(userParameters) == 2:
-        sequence_cleaner(userParameters[0], float(userParameters[1]))
-    elif len(userParameters) == 3:
-        sequence_cleaner(
-            userParameters[0], float(userParameters[1]), float(userParameters[2])
-        )
-    else:
-        print("There is a problem!")
-except:
-    print("There is a problem!")
 ```
 
 ### Generate your Consensus Sequence for each sequence within the FASTA file
