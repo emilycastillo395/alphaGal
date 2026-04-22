@@ -35,7 +35,7 @@ source activate myenv
 ### Install Conda Packages  
 So far I am only using `seqtk`. As I go, I will add more.  
 ```
-conda install -c bioconda seqtk mafft cutadapt
+conda install -c bioconda seqtk mafft
 ```
 ## Check Quality of fastq files and Create and Organize FASTA Files
 ### Merge FASTQ R1 and R2 Files (Seqtk)
@@ -52,9 +52,8 @@ fastqc -o fastqc_reports *_merged.fastq.gz
 ```
 ### Clean Up using Cutadapt
 ```
-python3 -m pip install --user --upgrade cutadapt
-conda create -n cutadapt-env cutadapt
-conda activate cutadapt-env
+module load GCCcore/13.2.0 cutadapt/5.0
+
 ```
 ***** Stopped working here *********** Pick up Here ************
 ```
@@ -63,7 +62,10 @@ for f in *merged.fastq.gz; do base=${f%.fastq.gz}; cutadapt -a AGATCGGAAGAGC -e 
 
 ### Convert FASTQ files to FASTA files
 ```
-echo "Running..."; for f in *_merged.fastq.gz; do echo "Processing $f"; out="${f/_merged.fastq.gz/.fasta}"; seqtk seq -a "$f" | gzip > "$out.gz"; done; echo "DONE!" &
+{ echo "Running..."; for f in ./trimmed_fastq/*_merged.fastq.gz; do echo "Processing $f"; out="${f/_merged.fastq.gz/.fasta}"; seqtk seq -a "$f" | gzip > "$out.gz"; done; echo "DONE!" } > fasta_files &
+
+{ echo "Running..."; for f in ./trimmed_fastq/*.merged.trimmed.fastq.gz; do echo "Processing $f"; seqtk seq -a "$f"; done; echo "DONE!"; } > fasta_files &
+
 ```
 
 ### Generate your Consensus Sequence for each sequence within the FASTA file
