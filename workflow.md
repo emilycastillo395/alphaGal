@@ -53,58 +53,24 @@ fastqc -o fastqc_reports *_merged.fastq.gz
 ### Clean Up using Cutadapt
 ```
 module load GCCcore/13.2.0 cutadapt/5.0
-
 ```
-***** Stopped working here *********** Pick up Here ************
+To clean up, I opted for discarding any sequence below a phred score of 20 (-q 20), an error rate above 10% (-e 0.1), and a minimum sequence length of 100bp (-m 100).
 ```
 for f in *merged.fastq.gz; do base=${f%.fastq.gz}; cutadapt -a AGATCGGAAGAGC -e 0.1 -q 20 -m 100 -o trimmed_fastq/${base}.trimmed.fastq.gz "$f"; done
 ```
-
+### Run FastQC to quality check sequences after cleanup
+```
+mkdir fastqc_reportsClean
+fastqc -o fastqc_reportsClean *.trimmed.fastq.gz
+```
 ### Convert FASTQ files to FASTA files
 ```
 { echo "Running..."; for f in ./trimmed_fastq/*_merged.fastq.gz; do echo "Processing $f"; out="${f/_merged.fastq.gz/.fasta}"; seqtk seq -a "$f" | gzip > "$out.gz"; done; echo "DONE!" } > fasta_files &
 
 { echo "Running..."; for f in ./trimmed_fastq/*.merged.trimmed.fastq.gz; do echo "Processing $f"; seqtk seq -a "$f"; done; echo "DONE!"; } > fasta_files &
-
 ```
+## BWA or bowtie2 Alignment
 
-### Generate your Consensus Sequence for each sequence within the FASTA file
-To send this to the hprc, I created a sbatch job called `mafft_consensus`. Here is the contents of the sbatch command. This allows each file to run simultaneously. When submistted there are 16 jobs submitted to the hprc. You can visualize the status of these jobs at `squeue --me`.
-```
-#!/bin/bash
-#SBATCH --job-name=mafft_consensus
-#SBATCH --output=logs/%x_%A_%a.out
-#SBATCH --error=logs/%x_%A_%a.err
-#SBATCH --time=12:00:00
-#SBATCH --cpus-per-task=4
-#SBATCH --ntasks=1
-#SBATCH --mem=8G
-#SBATCH --array=0-16
 
-echo "Starting job $SLURM_ARRAY_TASK_ID"
 
-module load Anaconda3/2024.02-1
-
-# initialize conda for non-interactive shell
-source $(conda info --base)/etc/profile.d/conda.sh
-
-conda activate myenv
-
-# Get file list (sorted for consistency)
-mapfile -t files < <(ls *.fasta.gz | sort)
-f=${files[$SLURM_ARRAY_TASK_ID]}
-
-echo "Processing: $f"
-
-base="${f/.fasta.gz/}"
-tmp_aln="${base}_aligned.fasta"
-out="${base}_consensus.fasta"
-
-# Step 1: Align with MAFFT
-gunzip -c "$f" | mafft --auto --thread 4 - > "$tmp_aln"
-
-# Step 2: Generate consensus with EMBOSS
-cons -sequence "$tmp_aln" -outseq "$out"
-
-echo "DONE: $out"
 ```
