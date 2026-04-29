@@ -1,4 +1,4 @@
-# AlphaGal Sequence Alignment
+# AlphaGal Off Target Analysis
 ## SetUp
 ### Log In to TAMU HPRC:
 `ssh NedID@grace.hprc.tamu.edu`  
