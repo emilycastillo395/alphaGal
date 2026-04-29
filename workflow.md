@@ -70,7 +70,83 @@ fastqc -o fastqc_reportsClean *.trimmed.fastq.gz
 { echo "Running..."; for f in ./trimmed_fastq/*.merged.trimmed.fastq.gz; do echo "Processing $f"; seqtk seq -a "$f"; done; echo "DONE!"; } > fasta_files &
 ```
 ## BWA or bowtie2 Alignment
+Before running BWA, I renamed all of the files to a more appropriate name for easier identification for sequence alignment.
 
+Load in modules for BWA:
+```
+module load GCCcore/12.3.0 GCCcore/13.2.0
+module load BWA/0.7.18
+```
 
+`bwa_align.sh` Loop for aligning and writing sam files
+```
+#!/bin/bash
+#SBATCH --job-name=bwa_align
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --time=04:00:00
+
+bwa index GGTA1_69425-78762.fa
+bwa index PMEL_57344558-57346013.fa
+
+for file in GGTA*_merged.fastq.gz
+do
+  base=${file%_merged.fastq.gz}
+  bwa mem GGTA1_69425-78762.fa "$file" > "${base}.sam"
+done
+
+for file in PMEL*_merged.fastq.gz
+do
+  base=${file%_merged.fastq.gz}
+  bwa mem PMEL_57344558-57346013.fa "$file" > "${base}.sam"
+done
+```
+
+## Samtools
+### .bam file sorting and indexing samples
 
 ```
+module spider SAMtools/1.21
+module load GCC/13.2.0 GCC/13.3.0 SAMtools/1.21
+```
+```
+#!/bin/bash
+#SBATCH --job-name=sortAndIndex_samples
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --time=04:00:00
+
+for file in *.sam
+do
+  base=${file%.sam}
+  samtools view -b "$file" > "${base}.bam"
+  samtools sort "${base}.bam" -o "${base}.sorted.bam"
+  samtools index "${base}.sorted.bam" "${base}.sorted.bai"
+done
+```
+
+### Indexing reference sequences
+
+```
+#!/bin/bash
+#SBATCH --job-name=indexReference_samtools
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --time=04:00:00
+
+### I have this working from my `Clean_Data2` directory
+samtools faidx ./reference_sequences/GGTA1_69425-78762.fa -o ./reference_sequences/GGTA1_69425-78762.fai
+samtools faidx ./reference_sequences/PMEL_57344558-57346013.fa -o ./reference_sequences/PMEL_57344558-57346013.fai
+```
+
+## Open IGV web app
+Link: https://igv.org/app/
+
+Upload .fasta and .fai (indexed references) to "genome" in IGV web app
+Upload sorted.bam and sorted.bai files to "tracks" and visualize reads.
