@@ -120,12 +120,15 @@ module load GCC/13.2.0 GCC/13.3.0 SAMtools/1.21
 #SBATCH --mem=16G
 #SBATCH --time=04:00:00
 
-for file in *.sam
+mkdir -p bam_files
+exec > bam_files/sortAndindex_samples.log 2>&1
+
+for file in /scratch/user/emilycastillo395/alphaGal_Workspace/Clean_Data/sam_files/*.sam
 do
-  base=${file%.sam}
-  samtools view -b "$file" > "${base}.bam"
-  samtools sort "${base}.bam" -o "${base}.sorted.bam"
-  samtools index "${base}.sorted.bam" "${base}.sorted.bai"
+  base=$(basename "$file" .sam)
+  samtools view -b "$file" > "bam_files/${base}.bam"
+  samtools sort "bam_files/${base}.bam" -o "$bam_files{base}.sorted.bam"
+  samtools index "bam_files/${base}.sorted.bam" "$bam_files/{base}.sorted.bai"
 done
 ```
 
