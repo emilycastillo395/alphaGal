@@ -88,19 +88,19 @@ module load BWA/0.7.18
 #SBATCH --mem=16G
 #SBATCH --time=04:00:00
 
-bwa index GGTA1.fa
-bwa index PMEL.fa
+bwa index reference_sequences/GGTA1.fa
+bwa index reference_sequences/PMEL.fa
 
 for file in GGTA*_merged.fastq.gz
 do
   base=${file%_merged.fastq.gz}
-  bwa mem GGTA1.fa "$file" > "${base}.sam"
+  bwa mem reference_sequences/GGTA1.fa "$file" > "${base}.sam"
 done
 
 for file in PMEL*_merged.fastq.gz
 do
   base=${file%_merged.fastq.gz}
-  bwa mem PMEL.fa "$file" > "${base}.sam"
+  bwa mem reference_sequences/PMEL.fa "$file" > "${base}.sam"
 done
 ```
 
