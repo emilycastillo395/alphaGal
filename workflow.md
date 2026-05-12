@@ -78,7 +78,7 @@ module load GCCcore/12.3.0 GCCcore/13.2.0
 module load BWA/0.7.18
 ```
 
-`bwa_align.sh` Loop for aligning and writing sam files
+`bwa_align_paired.sh` Loop for aligning and writing sam files
 ```
 #!/bin/bash
 #SBATCH --job-name=bwa_align
@@ -88,19 +88,19 @@ module load BWA/0.7.18
 #SBATCH --mem=16G
 #SBATCH --time=04:00:00
 
-bwa index GGTA1_69425-78762.fa
-bwa index PMEL_57344558-57346013.fa
+bwa index GGTA1.fa
+bwa index PMEL.fa
 
 for file in GGTA*_merged.fastq.gz
 do
   base=${file%_merged.fastq.gz}
-  bwa mem GGTA1_69425-78762.fa "$file" > "${base}.sam"
+  bwa mem GGTA1.fa "$file" > "${base}.sam"
 done
 
 for file in PMEL*_merged.fastq.gz
 do
   base=${file%_merged.fastq.gz}
-  bwa mem PMEL_57344558-57346013.fa "$file" > "${base}.sam"
+  bwa mem PMEL.fa "$file" > "${base}.sam"
 done
 ```
 
