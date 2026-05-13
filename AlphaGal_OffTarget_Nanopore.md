@@ -13,6 +13,8 @@ Our data is typically from Quintara, which can be downloaded by going to their w
 Copy files to your working directory.
 
 Go into your local terminal by opening another terminal screen and direct yourself to the folder or file you want to port over. Use the `scp` command to port your files over.  
+
+Example:
 `scp Clean_Data.zip emilycastillo395@grace.hprc.tamu.edu:/scratch/user/emilycastillo395/alphaGal_Workspace`
 
 ## Minimap2
