@@ -134,3 +134,17 @@ Run using the following
 ```
 sbatch samtools.sh
 ```
+
+## IGV Visialization
+Open IGV at the website: https://igv.org/app/
+
+### 1. Upload Reference sequences
+Click on the `Genome` dropdown.
+Select `Local File...`
+Upload your `.fa` and `.fai` files at the same time.
+
+### 2. Upload Sample bam and bai files
+Click on the `Tracks` dropdown.
+Select `Local File ...`
+Upload your `.sorted.bam` and `sorted.bai` files together for each sample. One sample at a time.
+
