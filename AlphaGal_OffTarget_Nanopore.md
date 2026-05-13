@@ -10,7 +10,9 @@ Emily I. Thornton
 ### 2. Secure Copy File to working directory  
 Our data is typically from Quintara, which can be downloaded by going to their website
 
-To do this, go into your local terminal by opening another terminal screen and direct yourself to the folder or file you want to port over. Use the `scp` command to port your files over.  
+Copy files to your working directory.
+
+Go into your local terminal by opening another terminal screen and direct yourself to the folder or file you want to port over. Use the `scp` command to port your files over.  
 `scp Clean_Data.zip emilycastillo395@grace.hprc.tamu.edu:/scratch/user/emilycastillo395/alphaGal_Workspace`
 
 ## Minimap2
