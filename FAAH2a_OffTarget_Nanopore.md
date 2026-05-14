@@ -71,6 +71,11 @@ Run the following command:
 ```
 sbatch minimap2.sh
 ```
+
+To remove gap penalty, the above bash script can be edited with `-E`. See example below:
+```
+minimap2 -ax map-ont -O 4,24 -E 0,0 ref.mmi reads.fastq.gz > out.sam
+```
 ## Samtools
 ### 1. Set Up
 Make a .sh file called `samtools.sh` by copy and pasting the following command into your working directory:
